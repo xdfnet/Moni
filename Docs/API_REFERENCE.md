@@ -26,6 +26,7 @@ struct MoniApp: App {
 **继承关系**：`App` 协议
 
 **主要职责**：
+
 - 应用启动和初始化
 - 生命周期管理
 - 菜单栏应用配置
@@ -46,7 +47,7 @@ final class MenuBarController: NSObject {
 
 **协议遵循**：`MonitorLatencyDelegate`, `MonitorNetworkDelegate`
 
-#### 主要属性
+#### MenuBarController 主要属性
 
 ```swift
 /// 当前显示模式
@@ -62,7 +63,7 @@ var lastError: MonitorError? { get set }
 var isHealthy: Bool { get set }
 ```
 
-#### 主要方法
+#### MenuBarController 主要方法
 
 ```swift
 /// 启动监控
@@ -88,9 +89,13 @@ func showUserFriendlyError(_ error: MonitorError) -> String
 
 ```swift
 // MARK: - MonitorLatencyDelegate
-func monitor(_ monitor: MonitorLatency, didUpdateLatency latency: TimeInterval, for endpoint: ServiceEndpoint)
+func monitor(_ monitor: MonitorLatency,
+          didUpdateLatency latency: TimeInterval,
+          for endpoint: ServiceEndpoint)
 
-func monitor(_ monitor: MonitorLatency, didFailWithError error: MonitorError, for endpoint: ServiceEndpoint)
+func monitor(_ monitor: MonitorLatency,
+          didFailWithError error: MonitorError,
+          for endpoint: ServiceEndpoint)
 
 // MARK: - MonitorNetworkDelegate
 func monitor(_ monitor: MonitorNetwork, didUpdateSpeed speed: Double)
@@ -114,7 +119,7 @@ class BaseMonitor: NSObject {
 
 **协议遵循**：无
 
-#### 主要属性
+#### BaseMonitor 主要属性
 
 ```swift
 /// 监控队列
@@ -130,7 +135,7 @@ var isMonitoring: Bool { get }
 private let monitoringLock = NSLock()
 ```
 
-#### 主要方法
+#### BaseMonitor 主要方法
 
 ```swift
 /// 启动监控
@@ -175,7 +180,7 @@ final class MonitorLatency: BaseMonitor {
 
 **协议遵循**：无
 
-#### 主要属性
+#### MonitorLatency 主要属性
 
 ```swift
 /// 延迟监控代理
@@ -191,26 +196,14 @@ private var isRetrying: Bool = false
 private var currentRetryDelay: TimeInterval = MonitorConstants.initialRetryDelay
 ```
 
-#### 主要方法
+#### MonitorLatency 主要方法
 
 ```swift
 /// 执行延迟监控
 override func performMonitoring()
-
-/// 处理连接状态变化
-private func handleConnectionStateChange(_ state: NWConnection.State)
-
-/// 处理成功连接
-private func handleSuccessfulConnection()
-
-/// 处理连接超时
-private func handleConnectionTimeout()
-
-/// 处理连接失败
-private func handleConnectionFailure(_ error: Error)
 ```
 
-#### 重试机制
+#### 连接状态管理
 
 ```swift
 /// 智能重试（指数退避 + 抖动）
@@ -239,7 +232,7 @@ final class MonitorNetwork: BaseMonitor {
 
 **协议遵循**：无
 
-#### 主要属性
+#### MonitorNetwork 主要属性
 
 ```swift
 /// 网络监控代理
@@ -255,7 +248,7 @@ private var currentReceived: UInt64 = 0
 private let interfaceName: String
 ```
 
-#### 主要方法
+#### MonitorNetwork 主要方法
 
 ```swift
 /// 执行网络监控
@@ -303,7 +296,7 @@ final class ServiceManager {
 
 **协议遵循**：无
 
-#### 主要属性
+#### ServiceManager 主要属性
 
 ```swift
 /// 共享实例
@@ -316,7 +309,7 @@ private let builtinEndpoints: [ServiceEndpoint]
 private var customEndpoints: [ServiceEndpoint] = []
 ```
 
-#### 主要方法
+#### ServiceManager 主要方法
 
 ```swift
 /// 获取所有可用端点
@@ -348,7 +341,7 @@ final class ConfigurationManager {
 
 **协议遵循**：无
 
-#### 主要属性
+#### ConfigurationManager 主要属性
 
 ```swift
 /// 共享实例
@@ -361,7 +354,7 @@ private let userDefaults = UserDefaults.standard
 private let configQueue = DispatchQueue(label: "com.moni.config", qos: .userInitiated)
 ```
 
-#### 主要方法
+#### ConfigurationManager 主要方法
 
 ```swift
 /// 获取显示模式
@@ -444,7 +437,8 @@ static func clamp<T: Comparable>(_ value: T, min: T, max: T) -> T
 static func safeArrayElement<T>(_ array: [T], at index: Int) -> T?
 
 /// 安全字典值访问
-static func safeDictionaryValue<T>(_ dictionary: [String: Any], for key: String) -> T?
+static func safeDictionaryValue<T>(_ dictionary: [String: Any],
+                             for key: String) -> T?
 ```
 
 #### 性能测量工具
@@ -454,7 +448,8 @@ static func safeDictionaryValue<T>(_ dictionary: [String: Any], for key: String)
 static func measureExecutionTime<T>(_ operation: () -> T) -> (result: T, time: TimeInterval)
 
 /// 测量异步函数执行时间
-static func measureExecutionTimeAsync<T>(_ operation: @escaping () async -> T) async -> (result: T, time: TimeInterval)
+static func measureExecutionTimeAsync<T>(_ operation: @escaping () async -> T)
+    async -> (result: T, time: TimeInterval)
 
 /// 打印性能统计
 static func printPerformanceStats(_ label: String, time: TimeInterval)
@@ -464,7 +459,10 @@ static func printPerformanceStats(_ label: String, time: TimeInterval)
 
 ```swift
 /// 调试打印
-static func debugPrint(_ message: String, file: String = #file, function: String = #function, line: Int = #line)
+static func debugPrint(_ message: String, 
+                      file: String = #file, 
+                      function: String = #function, 
+                      line: Int = #line)
 
 /// 格式化错误信息
 static func formatError(_ error: Error) -> String
@@ -484,10 +482,14 @@ static func getCallStack() -> [String]
 ```swift
 protocol MonitorLatencyDelegate: AnyObject {
     /// 延迟更新回调
-    func monitor(_ monitor: MonitorLatency, didUpdateLatency latency: TimeInterval, for endpoint: ServiceEndpoint)
+    func monitor(_ monitor: MonitorLatency,
+               didUpdateLatency latency: TimeInterval,
+               for endpoint: ServiceEndpoint)
     
     /// 监控失败回调
-    func monitor(_ monitor: MonitorLatency, didFailWithError error: MonitorError, for endpoint: ServiceEndpoint)
+    func monitor(_ monitor: MonitorLatency,
+               didFailWithError error: MonitorError,
+               for endpoint: ServiceEndpoint)
 }
 ```
 
@@ -535,6 +537,7 @@ enum DisplayMode: String, CaseIterable {
 **协议遵循**：`CaseIterable`
 
 **用例**：
+
 - 在状态栏显示不同的监控信息
 - 用户可以在菜单中切换显示模式
 
@@ -557,6 +560,7 @@ enum MonitorError: Error, LocalizedError {
 **继承关系**：`Error`, `LocalizedError`
 
 **用例**：
+
 - 错误处理和用户提示
 - 日志记录和调试
 - 重试机制触发
@@ -591,6 +595,7 @@ struct ServiceEndpoint: Codable, Equatable {
 **协议遵循**：`Codable`, `Equatable`
 
 **用例**：
+
 - 配置 AI 服务端点
 - 网络连接建立
 - 用户界面显示
@@ -623,6 +628,7 @@ struct MonitorResult {
 **协议遵循**：无
 
 **用例**：
+
 - 监控数据存储
 - 历史记录显示
 - 性能分析
@@ -658,6 +664,7 @@ struct MonitorConstants {
 ```
 
 **用途**：
+
 - 配置监控参数
 - 限制重试行为
 - 验证数据有效性
@@ -688,6 +695,7 @@ struct AppConstants {
 ```
 
 **用途**：
+
 - 应用标识
 - 版本信息
 - 界面更新配置
@@ -755,7 +763,7 @@ latencyMonitor.startMonitoring()
 networkMonitor.startMonitoring()
 ```
 
-### 配置管理
+### 配置管理示例
 
 ```swift
 // 获取配置管理器
@@ -770,7 +778,7 @@ config.notificationsEnabled = true
 config.notifyConfigurationChanged()
 ```
 
-### 错误处理
+### 错误处理示例
 
 ```swift
 // 实现代理方法
@@ -807,14 +815,17 @@ Utilities.debugPrint("监控器状态更新")
 ## 版本兼容性
 
 ### Swift 版本
+
 - **最低版本**：Swift 5.0
 - **推荐版本**：Swift 5.9+
 
 ### macOS 版本
+
 - **最低版本**：macOS 15.0
 - **推荐版本**：macOS 15.0+
 
 ### Xcode 版本
+
 - **最低版本**：Xcode 15.0
 - **推荐版本**：Xcode 15.0+
 
@@ -823,25 +834,29 @@ Utilities.debugPrint("监控器状态更新")
 ## 注意事项
 
 ### 线程安全
+
 - 所有 UI 更新必须在主线程执行
 - 使用 `DispatchQueue.main.async` 确保线程安全
 - 配置操作使用专用队列避免阻塞
 
 ### 内存管理
+
 - 使用 `weak` 引用避免循环引用
 - 及时清理网络连接和定时器
 - 在 `deinit` 中释放资源
 
 ### 错误处理
+
 - 始终实现错误处理逻辑
 - 提供用户友好的错误信息
 - 记录详细的错误日志用于调试
 
 ### 性能考虑
+
 - 避免在主线程执行耗时操作
 - 合理设置监控间隔
 - 使用适当的队列优先级
 
 ---
 
-*API 参考文档 - 最后更新：2025年1月*
+API 参考文档 - 最后更新：2025年8月

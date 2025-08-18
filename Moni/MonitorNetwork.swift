@@ -11,7 +11,7 @@
 //  - 通过 sysctl 读取各网卡累计字节数，按时间差计算速率
 //  - 仅统计非回环并且激活中的网卡
 //  - 继承 BaseMonitor 减少代码重复
-//  - 支持数据有效性检查和错误恢复
+//  - 支持数据有效性检查，异常数据自动重置
 //
 
 
@@ -22,7 +22,7 @@ import Darwin
 /// 网络速率回调协议（单位：MB/s）
 protocol MonitorNetworkDelegate: AnyObject {
     func networkStats(_ stats: MonitorNetwork, didUpdateDownloadSpeed speed: Double) // MB/s
-    func networkStats(_ stats: MonitorNetwork, didFailWithError error: MonitorError)
+    func networkStats(_ stats: MonitorNetwork, didFailWithError status: ConnectionStatus)
 }
 
 class MonitorNetwork: BaseMonitor {
@@ -38,7 +38,6 @@ class MonitorNetwork: BaseMonitor {
     
     override init(queueLabel: String, interval: TimeInterval) {
         super.init(queueLabel: queueLabel, interval: interval)
-        self.errorDelegate = self
     }
     
     // MARK: - 公共方法
@@ -51,7 +50,7 @@ class MonitorNetwork: BaseMonitor {
             lastBytesReceived = totalReceived
             lastUpdateTime = Utilities.currentTimestamp()
         } catch {
-            delegate?.networkStats(self, didFailWithError: MonitorError.sysctlError(error.localizedDescription))
+            delegate?.networkStats(self, didFailWithError: ConnectionStatus.disconnected)
             return
         }
         
@@ -119,7 +118,7 @@ class MonitorNetwork: BaseMonitor {
         } catch {
             Utilities.safeMainQueueCallback { [weak self] in
                 guard let self = self else { return }
-                self.delegate?.networkStats(self, didFailWithError: MonitorError.sysctlError(error.localizedDescription))
+                self.delegate?.networkStats(self, didFailWithError: ConnectionStatus.disconnected)
             }
             
             logNetworkError(error)
@@ -166,17 +165,17 @@ class MonitorNetwork: BaseMonitor {
         let mib: [Int32] = [CTL_NET, PF_ROUTE, 0, 0, NET_RT_IFLIST2, 0]
         var len: size_t = 0
 
-        try mib.withUnsafeBufferPointer { ptr in
+        mib.withUnsafeBufferPointer { ptr in
             if sysctl(UnsafeMutablePointer(mutating: ptr.baseAddress), UInt32(mib.count), nil, &len, nil, 0) < 0 {
-                throw MonitorError.sysctlError("sysctl (get size) failed: \(String(cString: strerror(errno)))")
+                return
             }
         }
 
         // 分配缓冲区并获取数据
         var buffer = [CChar](repeating: 0, count: len)
-        try mib.withUnsafeBufferPointer { ptr in
+        mib.withUnsafeBufferPointer { ptr in
             if sysctl(UnsafeMutablePointer(mutating: ptr.baseAddress), UInt32(mib.count), &buffer, &len, nil, 0) < 0 {
-                throw MonitorError.sysctlError("sysctl (get data) failed: \(String(cString: strerror(errno)))")
+                return
             }
         }
 
@@ -211,11 +210,3 @@ class MonitorNetwork: BaseMonitor {
     }
 }
 
-// MARK: - ErrorHandling 实现
-extension MonitorNetwork: ErrorHandling {
-    func logError(_ error: MonitorError, context: String) {
-        #if DEBUG
-        print("[\(context)] Error: \(error.localizedDescription)")
-        #endif
-    }
-}

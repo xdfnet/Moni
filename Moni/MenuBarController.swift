@@ -17,8 +17,8 @@ import SwiftUI
 
 // MARK: - 显示模式枚举
 enum DisplayMode: String, CaseIterable {
-    case serviceLatency = "LLM"
-    case networkSpeed = "Net"
+    case serviceLatency = "Service"
+    case networkSpeed = "Network"
 }
 
 // MARK: - 菜单栏控制器
@@ -39,7 +39,7 @@ class MenuBarController: NSObject, MonitorLatencyDelegate, MonitorNetworkDelegat
     private var currentDownloadSpeed: String = AppConstants.defaultValue
     
     /// 状态指示器
-    private var lastError: MonitorError?
+    private var connectionStatus: ConnectionStatus = .disconnected
     private var isHealthy: Bool = true
     
     /// 当前展示模式（切换时联动启停对应监控）
@@ -76,6 +76,24 @@ class MenuBarController: NSObject, MonitorLatencyDelegate, MonitorNetworkDelegat
         monitor.stopMonitoring()
         networkStats.stopMonitoring()
         statusBarItem = nil
+    }
+
+    /// 系统即将睡眠：暂停监控并移除状态栏项，防止唤醒后按钮丢失/无响应
+    func suspend() {
+        monitor.stopMonitoring()
+        networkStats.stopMonitoring()
+        statusBarItem = nil
+    }
+
+    /// 系统唤醒后：重建状态栏项并恢复监控
+    func resumeAfterWake() {
+        // 重新创建状态栏按钮
+        if statusBarItem == nil {
+            setupStatusBar()
+        }
+        // 恢复监控状态
+        updateMonitoringState()
+        updateCombinedDisplay()
     }
     
     // MARK: - 私有方法
@@ -149,8 +167,10 @@ class MenuBarController: NSObject, MonitorLatencyDelegate, MonitorNetworkDelegat
         menu.addItem(createDisplayModeMenu())
         menu.addItem(NSMenuItem.separator())
         
-        // LLM 服务选择
-        menu.addItem(createServicesMenu())
+        // 直接加入三个服务分类
+        for category in ServiceManager.shared.categories {
+            menu.addItem(createServiceCategoryMenu(for: category))
+        }
         menu.addItem(NSMenuItem.separator())
         
         // 监控间隔设置
@@ -220,11 +240,13 @@ class MenuBarController: NSObject, MonitorLatencyDelegate, MonitorNetworkDelegat
     }
     
     /// 创建服务选择菜单
-    private func createServicesMenu() -> NSMenuItem {
-        let servicesItem = NSMenuItem(title: "LLM", action: nil, keyEquivalent: "")
-        let servicesSubmenu = NSMenu()
+    private func createServiceCategoryMenu(for category: ServiceCategory) -> NSMenuItem {
+        let categoryItem = NSMenuItem(title: category.displayName, action: nil, keyEquivalent: "")
+        let categorySubmenu = NSMenu()
         
-        for endpoint in ServiceManager.shared.endpoints {
+        // 为该类别添加服务
+        let endpoints = ServiceManager.shared.getEndpoints(for: category)
+        for endpoint in endpoints {
             let item = NSMenuItem(
                 title: endpoint.name,
                 action: #selector(serviceSelected(_:)),
@@ -233,11 +255,11 @@ class MenuBarController: NSObject, MonitorLatencyDelegate, MonitorNetworkDelegat
             item.target = self
             item.representedObject = endpoint
             item.state = (endpoint.name == currentEndpoint?.name) ? .on : .off
-            servicesSubmenu.addItem(item)
+            categorySubmenu.addItem(item)
         }
         
-        servicesItem.submenu = servicesSubmenu
-        return servicesItem
+        categoryItem.submenu = categorySubmenu
+        return categoryItem
     }
     
     /// 创建 About 菜单
@@ -301,6 +323,12 @@ class MenuBarController: NSObject, MonitorLatencyDelegate, MonitorNetworkDelegat
     
     @objc private func serviceSelected(_ sender: NSMenuItem) {
         guard let endpoint = sender.representedObject as? ServiceEndpoint else { return }
+        
+        // 选择服务时自动切换到Service显示模式
+        if currentDisplayMode != .serviceLatency {
+            currentDisplayMode = .serviceLatency
+        }
+        
         switchToEndpoint(endpoint)
     }
     
@@ -376,15 +404,12 @@ class MenuBarController: NSObject, MonitorLatencyDelegate, MonitorNetworkDelegat
     
     /// 创建状态图标
     private func createStatusIcon() -> NSImage? {
-        if let error = lastError {
-            // 有错误时显示警告图标
-            return NSImage(systemSymbolName: "exclamationmark.triangle.fill", accessibilityDescription: "Error")
-        } else if isHealthy {
-            // 健康状态显示检查图标
-            return NSImage(systemSymbolName: "checkmark.circle.fill", accessibilityDescription: "Healthy")
+        if connectionStatus == .connected {
+            // 连接成功显示检查图标
+            return NSImage(systemSymbolName: "checkmark.circle.fill", accessibilityDescription: "Connected")
         } else {
-            // 未知状态显示问号图标
-            return NSImage(systemSymbolName: "questionmark.circle", accessibilityDescription: "Unknown")
+            // 连接失败显示警告图标
+            return NSImage(systemSymbolName: "exclamationmark.triangle.fill", accessibilityDescription: "Disconnected")
         }
     }
     
@@ -407,10 +432,10 @@ class MenuBarController: NSObject, MonitorLatencyDelegate, MonitorNetworkDelegat
         
         tooltip += "Update Rate: \(Utilities.formatInterval(currentMonitoringInterval))\n"
         
-        if let error = lastError {
-            tooltip += "Status: Error - \(error.localizedDescription)"
+        if connectionStatus == .disconnected {
+            tooltip += "Status: Disconnected"
         } else {
-            tooltip += "Status: Healthy"
+            tooltip += "Status: Connected"
         }
         
         return tooltip
@@ -421,7 +446,11 @@ class MenuBarController: NSObject, MonitorLatencyDelegate, MonitorNetworkDelegat
         switch currentDisplayMode {
         case .serviceLatency:
             let serviceName = currentEndpoint?.name ?? AppConstants.defaultValue
-            return "\(serviceName): \(currentLatency)"
+            if connectionStatus == .connected {
+                return "\(serviceName): \(currentLatency)"
+            } else {
+                return "\(serviceName): \(AppConstants.defaultValue)"
+            }
         case .networkSpeed:
             return "↓\(currentDownloadSpeed)"
         }
@@ -438,21 +467,15 @@ class MenuBarController: NSObject, MonitorLatencyDelegate, MonitorNetworkDelegat
     func monitor(_ monitor: MonitorLatency, didUpdateLatency latency: TimeInterval, for endpoint: ServiceEndpoint) {
         let latencyMs = latency * 1000
         currentLatency = String(format: "%.0fms", latencyMs)
-        lastError = nil
+        connectionStatus = .connected
         isHealthy = true
         updateCombinedDisplay()
     }
     
-    func monitor(_ monitor: MonitorLatency, didFailWithError error: MonitorError, for endpoint: ServiceEndpoint) {
-        currentLatency = AppConstants.errorMessage
-        lastError = error
+    func monitor(_ monitor: MonitorLatency, didFailWithError status: ConnectionStatus, for endpoint: ServiceEndpoint) {
+        currentLatency = AppConstants.defaultValue
+        connectionStatus = status
         isHealthy = false
-        
-        // 记录错误日志
-        Utilities.logError(error, context: "LatencyMonitor", additionalInfo: "Endpoint: \(endpoint.name)")
-        
-        // 显示用户友好的错误信息
-        showUserFriendlyError(error, for: endpoint)
         
         updateCombinedDisplay()
     }
@@ -462,38 +485,16 @@ class MenuBarController: NSObject, MonitorLatencyDelegate, MonitorNetworkDelegat
     /// 下行网速更新（单位 MB/s，2 位小数）
     func networkStats(_ stats: MonitorNetwork, didUpdateDownloadSpeed speed: Double) {
         currentDownloadSpeed = formatSpeed(speed)
-        lastError = nil
+        connectionStatus = .connected
         isHealthy = true
         updateCombinedDisplay()
     }
     
-    func networkStats(_ stats: MonitorNetwork, didFailWithError error: MonitorError) {
+    func networkStats(_ stats: MonitorNetwork, didFailWithError status: ConnectionStatus) {
         currentDownloadSpeed = AppConstants.defaultValue
-        lastError = error
+        connectionStatus = status
         isHealthy = false
         
-        // 记录错误日志
-        Utilities.logError(error, context: "NetworkMonitor")
-        
-        // 显示用户友好的错误信息
-        showUserFriendlyError(error, for: nil)
-        
         updateCombinedDisplay()
-    }
-    
-    // MARK: - 错误处理
-    
-    /// 显示用户友好的错误信息
-    private func showUserFriendlyError(_ error: MonitorError, for endpoint: ServiceEndpoint?) {
-        let errorMessage = Utilities.userFriendlyErrorMessage(error)
-        let title = "Monitoring Error"
-        
-        // 在状态栏显示错误提示
-        DispatchQueue.main.async { [weak self] in
-            // 可以在这里添加系统通知或其他用户友好的错误提示
-            #if DEBUG
-            print("[\(title)] \(errorMessage)")
-            #endif
-        }
     }
 }

@@ -66,37 +66,16 @@ struct ServiceEndpoint {
     }
 }
 
-// MARK: - 统一错误类型
-enum MonitorError: Error, LocalizedError {
-    case timeout
-    case connectionFailed
-    case networkError(Error)
-    case invalidEndpoint
-    case sysctlError(String)
-    
-    var errorDescription: String? {
-        switch self {
-        case .timeout:
-            return "Connection timeout"
-        case .connectionFailed:
-            return "Connection failed"
-        case .networkError(let error):
-            return "Network error: \(error.localizedDescription)"
-        case .invalidEndpoint:
-            return "Invalid endpoint"
-        case .sysctlError(let message):
-            return "System error: \(message)"
-        }
-    }
+// MARK: - 连接状态
+enum ConnectionStatus {
+    case connected
+    case disconnected
 }
 
 // MARK: - 监控相关常量
 struct MonitorConstants {
-    // 连接相关
-    static let connectionTimeout: TimeInterval = 3.0
-    static let maxRetries = 3
-    static let retryDelay: TimeInterval = 1.0
-    static let maxRetryDelay: TimeInterval = 30.0  // 最大重试延迟
+    // 连接超时
+    static let connectionTimeout: TimeInterval = 0.5
     
     // 监控间隔
     static let defaultLatencyInterval: TimeInterval = 0.5
@@ -106,7 +85,7 @@ struct MonitorConstants {
     static let availableIntervals: [TimeInterval] = [0.5, 1.0, 2.0, 5.0]
     static let defaultUserInterval: TimeInterval = 0.5
     
-    // 新增：监控间隔限制
+    // 监控间隔限制
     static let minInterval: TimeInterval = 0.1
     static let maxInterval: TimeInterval = 10.0
     
@@ -114,17 +93,7 @@ struct MonitorConstants {
     static let latencyQueueLabel = "com.moni.latency"
     static let networkQueueLabel = "com.moni.network"
     
-    // 新增：网络配置
-    static let networkBufferSize = 1024 * 1024 // 1MB
-    static let maxConnectionAttempts = 5
-    static let connectionRetryDelay: TimeInterval = 2.0
-    
-    // 新增：性能配置
-    static let maxConcurrentConnections = 3
-    static let connectionPoolTimeout: TimeInterval = 30.0
-    
-    // 新增：网络监控配置
+    // 网络监控配置
     static let maxReasonableSpeed: Double = 1000.0  // 1000 MB/s 作为合理速度上限
-    static let networkStatsResetThreshold: UInt64 = 1000 * 1024 * 1024  // 1GB 作为重置阈值
 }
 

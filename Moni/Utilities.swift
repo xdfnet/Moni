@@ -78,34 +78,7 @@ struct Utilities {
         }
     }
     
-    // MARK: - 错误处理工具
-    
-    /// 创建用户友好的错误消息
-    static func userFriendlyErrorMessage(_ error: MonitorError) -> String {
-        switch error {
-        case .timeout:
-            return "连接超时，请检查网络"
-        case .connectionFailed:
-            return "连接失败，请稍后重试"
-        case .networkError:
-            return "网络错误，请检查网络设置"
-        case .invalidEndpoint:
-            return "无效的服务端点"
-        case .sysctlError:
-            return "系统错误，请重启应用"
-        }
-    }
-    
-    /// 记录错误日志
-    static func logError(_ error: MonitorError, context: String, additionalInfo: String? = nil) {
-        #if DEBUG
-        var logMessage = "[\(context)] Error: \(error.localizedDescription)"
-        if let additionalInfo = additionalInfo {
-            logMessage += " - \(additionalInfo)"
-        }
-        print(logMessage)
-        #endif
-    }
+
     
     // MARK: - 时间工具
     

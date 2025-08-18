@@ -40,8 +40,7 @@ class BaseMonitor: BaseMonitorProtocol {
     /// 监控间隔
     internal var monitoringInterval: TimeInterval
     
-    /// 错误处理代理
-    weak var errorDelegate: ErrorHandling?
+
     
     /// 监控状态锁（线程安全）
     private let monitoringLock = NSLock()
@@ -149,38 +148,4 @@ class BaseMonitor: BaseMonitorProtocol {
     }
 }
 
-// MARK: - 错误处理协议
-protocol ErrorHandling: AnyObject {
-    func handleError(_ error: MonitorError, context: String)
-    func logError(_ error: MonitorError, context: String)
-}
 
-// MARK: - 错误处理扩展
-extension ErrorHandling {
-    func handleError(_ error: MonitorError, context: String) {
-        logError(error, context: context)
-        // 统一的错误恢复逻辑
-        performErrorRecovery(error, context: context)
-    }
-    
-    private func performErrorRecovery(_ error: MonitorError, context: String) {
-        // 根据错误类型执行恢复逻辑
-        switch error {
-        case .timeout:
-            // 超时错误：可以尝试重新连接
-            break
-        case .connectionFailed:
-            // 连接失败：等待一段时间后重试
-            break
-        case .networkError:
-            // 网络错误：检查网络状态
-            break
-        case .invalidEndpoint:
-            // 无效端点：跳过当前端点
-            break
-        case .sysctlError:
-            // 系统错误：可能需要重启监控
-            break
-        }
-    }
-}

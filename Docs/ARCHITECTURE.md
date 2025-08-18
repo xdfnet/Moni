@@ -6,7 +6,7 @@ Moni 采用分层架构设计，遵循单一职责原则和依赖倒置原则，
 
 ## 整体架构
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │                    Presentation Layer                       │
 │  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────┐ │
@@ -44,6 +44,7 @@ Moni 采用分层架构设计，遵循单一职责原则和依赖倒置原则，
 ### 1. 表现层 (Presentation Layer)
 
 #### MenuBarController
+
 - **职责**：管理菜单栏界面和用户交互
 - **功能**：
   - 状态栏图标显示
@@ -54,6 +55,7 @@ Moni 采用分层架构设计，遵循单一职责原则和依赖倒置原则，
 - **依赖**：MonitorLatencyDelegate, MonitorNetworkDelegate
 
 #### 状态指示器系统
+
 - **健康状态图标**：✓ (健康)、⚠️ (警告)、❌ (错误)
 - **工具提示**：显示详细的状态信息
 - **实时更新**：根据监控状态动态变化
@@ -61,16 +63,18 @@ Moni 采用分层架构设计，遵循单一职责原则和依赖倒置原则，
 ### 2. 业务逻辑层 (Business Logic Layer)
 
 #### MonitorLatency
+
 - **职责**：监控 AI 服务的网络延迟
 - **核心功能**：
   - TCP 连接延迟测量
-  - 智能重试机制（指数退避 + 抖动）
+  - 简化状态管理（连接成功/失败）
   - 连接状态管理
   - 错误处理和恢复
 - **继承**：BaseMonitor
 - **设计模式**：策略模式 + 观察者模式
 
 #### MonitorNetwork
+
 - **职责**：监控系统网络流量
 - **核心功能**：
   - 网络接口流量统计
@@ -81,16 +85,18 @@ Moni 采用分层架构设计，遵循单一职责原则和依赖倒置原则，
 - **设计模式**：策略模式 + 观察者模式
 
 #### ServiceManager
-- **职责**：管理 AI 服务端点配置
+
+- **职责**：管理服务端点配置
 - **核心功能**：
-  - 内置服务端点管理
+  - 内置服务端点管理（AI服务、包管理器、容器服务）
   - 端点验证
-  - 服务选择持久化
+  - 服务查找和配置重载
 - **设计模式**：单例模式 + 工厂模式
 
 ### 3. 基础设施层 (Infrastructure Layer)
 
 #### BaseMonitor
+
 - **职责**：提供监控功能的通用实现
 - **核心功能**：
   - 监控状态管理
@@ -101,6 +107,7 @@ Moni 采用分层架构设计，遵循单一职责原则和依赖倒置原则，
 - **线程安全**：使用 NSLock 保护共享状态
 
 #### ConfigurationManager
+
 - **职责**：统一管理应用配置
 - **核心功能**：
   - 配置读写和验证
@@ -111,6 +118,7 @@ Moni 采用分层架构设计，遵循单一职责原则和依赖倒置原则，
 - **线程安全**：使用专用队列处理配置操作
 
 #### Utilities
+
 - **职责**：提供通用工具函数
 - **核心功能**：
   - 安全的数值转换
@@ -122,53 +130,67 @@ Moni 采用分层架构设计，遵循单一职责原则和依赖倒置原则，
 ### 4. 系统层 (System Layer)
 
 #### Network.framework
+
 - **用途**：TCP 连接建立和管理
 - **集成方式**：通过 NWConnection 实现
 
 #### sysctl 接口
+
 - **用途**：获取系统网络统计信息
 - **集成方式**：通过 Darwin 系统调用实现
 
 #### Grand Central Dispatch (GCD)
+
 - **用途**：异步任务和线程管理
 - **集成方式**：通过 DispatchQueue 实现
 
 ## 设计模式
 
 ### 1. 分层架构 (Layered Architecture)
+
 - **表现层**：处理用户界面和交互
 - **业务逻辑层**：实现核心业务功能
 - **基础设施层**：提供通用服务和工具
 - **系统层**：操作系统和框架接口
 
 ### 2. 代理模式 (Delegate Pattern)
+
 ```swift
 protocol MonitorLatencyDelegate: AnyObject {
-    func monitor(_ monitor: MonitorLatency, didUpdateLatency latency: TimeInterval, for endpoint: ServiceEndpoint)
-    func monitor(_ monitor: MonitorLatency, didFailWithError error: MonitorError, for endpoint: ServiceEndpoint)
+    func monitor(_ monitor: MonitorLatency, 
+                didUpdateLatency latency: TimeInterval, 
+                for endpoint: ServiceEndpoint)
+    func monitor(_ monitor: MonitorLatency, 
+                didFailWithError error: MonitorError, 
+                for endpoint: ServiceEndpoint)
 }
 ```
 
 ### 3. 观察者模式 (Observer Pattern)
+
 - 通过代理模式实现状态变化通知
 - 支持多个观察者订阅同一监控器
 
 ### 4. 策略模式 (Strategy Pattern)
+
 - 不同的监控策略（延迟监控 vs 网络监控）
 - 可配置的监控间隔策略
 
 ### 5. 模板方法模式 (Template Method Pattern)
+
 - BaseMonitor 定义监控流程模板
 - 子类实现具体的监控逻辑
 
 ### 6. 单例模式 (Singleton Pattern)
+
 - ServiceManager.shared
 - ConfigurationManager.shared
 
 ## 数据流
 
 ### 监控数据流
-```
+
+```text
 1. 用户选择监控模式 (LLM/Net)
 2. 启动对应的监控器
 3. 监控器执行监控逻辑
@@ -179,7 +201,8 @@ protocol MonitorLatencyDelegate: AnyObject {
 ```
 
 ### 配置数据流
-```
+
+```text
 1. 用户修改配置
 2. ConfigurationManager 验证配置
 3. 保存到 UserDefaults
@@ -191,6 +214,7 @@ protocol MonitorLatencyDelegate: AnyObject {
 ## 错误处理
 
 ### 错误类型
+
 ```swift
 enum MonitorError: Error, LocalizedError {
     case timeout              // 连接超时
@@ -201,19 +225,22 @@ enum MonitorError: Error, LocalizedError {
 }
 ```
 
-### 错误恢复策略
-- **重试机制**：指数退避 + 抖动算法
-- **降级处理**：网络错误时显示友好提示
-- **状态恢复**：错误后自动重置到健康状态
+### 状态管理策略
+
+- **连接状态**：连接成功/失败两种状态
+- **状态指示**：成功显示数值，失败显示 `---`
+- **自动恢复**：系统睡眠/唤醒后自动重建状态栏和恢复监控
 
 ## 线程安全
 
 ### 保护机制
+
 - **NSLock**：保护监控状态
 - **专用队列**：配置操作专用队列
 - **主队列回调**：UI 更新确保在主线程
 
 ### 异步处理
+
 - **后台队列**：监控操作在后台执行
 - **主队列**：UI 更新在主队列执行
 - **队列隔离**：不同监控器使用独立队列
@@ -221,29 +248,34 @@ enum MonitorError: Error, LocalizedError {
 ## 性能优化
 
 ### 资源管理
+
 - **定时器优化**：设置合理的容差值
 - **连接复用**：避免重复连接
 - **内存管理**：及时释放不需要的资源
 
 ### 监控优化
+
 - **可配置间隔**：用户可调整监控频率
-- **智能重试**：避免无效的重试操作
+- **状态管理**：避免复杂的状态处理
 - **数据验证**：过滤无效数据
 
 ## 扩展性设计
 
 ### 新监控器添加
+
 1. 继承 BaseMonitor
 2. 实现 performMonitoring() 方法
 3. 在 MenuBarController 中集成
 4. 添加到配置管理
 
 ### 新服务端点添加
+
 1. 在 ServiceManager 中添加配置
 2. 更新菜单显示
 3. 支持用户自定义端点
 
 ### 新配置项添加
+
 1. 在 ConfigurationManager 中定义
 2. 添加验证逻辑
 3. 更新 UI 配置界面
@@ -251,20 +283,23 @@ enum MonitorError: Error, LocalizedError {
 ## 测试策略
 
 ### 单元测试
+
 - 监控器逻辑测试
 - 配置管理测试
 - 工具函数测试
 
 ### 集成测试
+
 - 监控流程测试
 - 错误处理测试
 - 配置变更测试
 
 ### 性能测试
+
 - 内存使用测试
 - CPU 占用测试
 - 网络性能测试
 
 ---
 
-*架构文档 - 最后更新：2025年1月*
+架构文档 - 最后更新：2025年8月

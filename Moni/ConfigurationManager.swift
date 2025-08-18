@@ -23,9 +23,6 @@ struct ConfigKeys {
     static let lastSelectedService = "lastSelectedService"
     static let customEndpoints = "customEndpoints"
     static let enableNotifications = "enableNotifications"
-    static let autoRetry = "autoRetry"
-    static let maxRetries = "maxRetries"
-    static let connectionTimeout = "connectionTimeout"
 }
 
 // MARK: - 配置管理器
@@ -147,49 +144,6 @@ class ConfigurationManager {
         return defaults.bool(forKey: ConfigKeys.enableNotifications)
     }
     
-    /// 设置是否自动重试
-    func setAutoRetry(_ enabled: Bool) {
-        configQueue.async {
-            self.defaults.set(enabled, forKey: ConfigKeys.autoRetry)
-            self.notifyConfigurationChanged()
-        }
-    }
-    
-    /// 获取是否自动重试
-    func getAutoRetry() -> Bool {
-        return defaults.bool(forKey: ConfigKeys.autoRetry)
-    }
-    
-    /// 设置最大重试次数
-    func setMaxRetries(_ count: Int) {
-        let validatedCount = Utilities.clamp(count, min: 1, max: 10)
-        configQueue.async {
-            self.defaults.set(validatedCount, forKey: ConfigKeys.maxRetries)
-            self.notifyConfigurationChanged()
-        }
-    }
-    
-    /// 获取最大重试次数
-    func getMaxRetries() -> Int {
-        let count = defaults.integer(forKey: ConfigKeys.maxRetries)
-        return count > 0 ? count : MonitorConstants.maxRetries
-    }
-    
-    /// 设置连接超时时间
-    func setConnectionTimeout(_ timeout: TimeInterval) {
-        let validatedTimeout = Utilities.clamp(timeout, min: 1.0, max: 30.0)
-        configQueue.async {
-            self.defaults.set(validatedTimeout, forKey: ConfigKeys.connectionTimeout)
-            self.notifyConfigurationChanged()
-        }
-    }
-    
-    /// 获取连接超时时间
-    func getConnectionTimeout() -> TimeInterval {
-        let timeout = defaults.double(forKey: ConfigKeys.connectionTimeout)
-        return timeout > 0 ? timeout : MonitorConstants.connectionTimeout
-    }
-    
     // MARK: - 配置管理
     
     /// 重置所有配置到默认值
@@ -214,9 +168,6 @@ class ConfigurationManager {
                 "port": $0.port
             ]},
             "enableNotifications": getEnableNotifications(),
-            "autoRetry": getAutoRetry(),
-            "maxRetries": getMaxRetries(),
-            "connectionTimeout": getConnectionTimeout(),
             "exportDate": Date().timeIntervalSince1970
         ]
         
@@ -260,18 +211,6 @@ class ConfigurationManager {
                 self.setEnableNotifications(enableNotifications)
             }
             
-            if let autoRetry = config["autoRetry"] as? Bool {
-                self.setAutoRetry(autoRetry)
-            }
-            
-            if let maxRetries = config["maxRetries"] as? Int {
-                self.setMaxRetries(maxRetries)
-            }
-            
-            if let connectionTimeout = config["connectionTimeout"] as? TimeInterval {
-                self.setConnectionTimeout(connectionTimeout)
-            }
-            
             self.notifyConfigurationChanged()
         }
         
@@ -289,9 +228,7 @@ class ConfigurationManager {
     private func registerDefaults() {
         let defaultValues: [String: Any] = [
             ConfigKeys.enableNotifications: true,
-            ConfigKeys.autoRetry: true,
-            ConfigKeys.maxRetries: MonitorConstants.maxRetries,
-            ConfigKeys.connectionTimeout: MonitorConstants.connectionTimeout
+            
         ]
         
         defaults.register(defaults: defaultValues)

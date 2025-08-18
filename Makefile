@@ -1,23 +1,28 @@
 #
 #  Makefile
-#  Moni
+#  Moni - AI Service Latency Monitor
 #
 #  Created by Moni Team
 #  Copyright © 2025 Moni App. All rights reserved.
 #
-#  Moni 项目构建工具
+#  项目构建自动化工具
 #
-#  功能说明：
-#  - 提供完整的项目构建流程
-#  - 自动版本号递增和构建号生成
-#  - 应用生命周期管理（关闭、构建、安装、启动）
-#  - 支持固定版本构建模式
-#  - 彩色终端输出和进度指示
-#  - 控制台输出模式：通过修改 OUTPUT_MODE 变量控制构建输出
-#    - 默认模式：空值（显示标准构建信息）
-#    - 详细模式：-verbose（显示所有构建细节）
-#    - 静默模式：-quiet（只显示警告和错误）
-#    - 完全静默：> /dev/null 2>&1（隐藏所有输出）
+#  主要功能：
+#  • 一键构建：自动完成构建、安装、启动全流程
+#  • 版本管理：自动递增版本号和生成构建号
+#  • 应用管理：智能检测并关闭运行中的应用实例
+#  • 输出控制：支持多种构建输出模式
+#
+#  使用方法：
+#  • make          - 执行完整构建流程（推荐）
+#  • make build    - 完整构建流程（包含版本递增）
+#  • make build-fixed - 固定版本构建（不递增版本）
+#
+#  输出模式配置（OUTPUT_MODE）：
+#  • 空值          - 标准输出（显示构建进度）
+#  • -quiet        - 静默模式（只显示警告和错误）
+#  • -verbose      - 详细模式（显示所有构建细节）
+#  • > /dev/null   - 完全静默（隐藏所有输出）
 #
 
 # 项目基本信息
@@ -35,7 +40,7 @@ APP_BUNDLE = $(PRODUCT_DIR)/$(PROJECT_NAME).app
 SOURCE_INFO_PLIST = ./$(PROJECT_NAME)/Info.plist
 
 # 输出模式配置
-OUTPUT_MODE = > /dev/null 2>&1
+OUTPUT_MODE = -quiet
 
 # 颜色控制 - 支持 macOS 终端
 # 检测是否支持颜色输出
@@ -68,6 +73,9 @@ endif
 
 .PHONY: build build-fixed step-clear step-close-app step-update-version step-build-app step-install-app step-cleanup step-open-app step-complete
 
+# 默认目标：执行完整构建流程
+all: build
+
 # 清理控制台
 step-clear:
 	@clear # 清理控制台
@@ -93,7 +101,7 @@ step-update-version:
 	@CURRENT_FULL_VERSION=$$(plutil -extract CFBundleShortVersionString raw "$(SOURCE_INFO_PLIST)" 2>/dev/null || echo "1.00"); \
 	MAJOR=$$(echo $$CURRENT_FULL_VERSION | awk -F. '{print $$1}'); \
 	MINOR=$$(echo $$CURRENT_FULL_VERSION | awk -F. '{print $$2}'); \
-	NEW_MINOR=$$(($$MINOR + 1)); \
+	NEW_MINOR=$$((10#$$MINOR + 1)); \
 	NEW_VERSION="$${MAJOR}.$$(printf "%02d" $$NEW_MINOR)"; \
 	BUILD_NUMBER=$$(date +%Y%m%d%H%M%S); \
 	echo "$(GREEN)$(ICON_SUCCESS) 版本号已更新：$$CURRENT_FULL_VERSION → $$NEW_VERSION (Build: $$BUILD_NUMBER)$(NC)"; \

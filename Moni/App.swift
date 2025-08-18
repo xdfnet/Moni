@@ -43,6 +43,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     /// 菜单栏管理器实例
     var menuBarManager: MenuBarController?
+    private var sleepObservers: [Any] = []
     
     // MARK: - 应用生命周期
     
@@ -53,11 +54,28 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
         // 初始化菜单栏管理器（创建状态栏图标与菜单）
         menuBarManager = MenuBarController()
+
+        // 监听系统睡眠/唤醒事件
+        let nc = NSWorkspace.shared.notificationCenter
+        let willSleep = nc.addObserver(forName: NSWorkspace.willSleepNotification, object: nil, queue: .main) { [weak self] _ in
+            self?.menuBarManager?.suspend()
+        }
+        let didWake = nc.addObserver(forName: NSWorkspace.didWakeNotification, object: nil, queue: .main) { [weak self] _ in
+            self?.menuBarManager?.resumeAfterWake()
+        }
+        sleepObservers.append(contentsOf: [willSleep, didWake])
     }
     
     /// 应用即将退出回调
     func applicationWillTerminate(_ notification: Notification) {
         // 退出前清理资源（停止定时器、释放对象）
         menuBarManager?.cleanup()
+
+        // 移除通知监听
+        let nc = NSWorkspace.shared.notificationCenter
+        for obs in sleepObservers {
+            nc.removeObserver(obs)
+        }
+        sleepObservers.removeAll()
     }
 }

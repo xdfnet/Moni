@@ -1,12 +1,12 @@
 # Moni 项目注释规范
 
-## 📝 概述
+## 概述
 
 本文档定义了 Moni 项目的统一注释规范，确保所有代码文件都遵循一致的注释风格，提高代码的可读性和可维护性。
 
-## 🏗️ 文件头注释规范
+## 文件头注释规范
 
-### 标准格式
+### 文件头标准格式
 
 ```swift
 //
@@ -25,7 +25,7 @@
 //
 ```
 
-### 示例
+### 文件头示例
 
 ```swift
 //
@@ -40,14 +40,14 @@
 //  功能说明：
 //  - 通过 Network.framework 建立到目标主机端口的 TCP 连接
 //  - 连接 ready 的时间差即为近似网络时延
-//  - 内置超时与最多重试次数，失败时通过代理上报
-//  - 支持指数退避重试和智能错误恢复
+//  - 内置超时处理，失败时通过代理上报连接状态
+//  - 支持系统睡眠/唤醒后的自动恢复
 //
 ```
 
-## 🏷️ MARK 注释规范
+## MARK 注释规范
 
-### 标准格式
+### MARK 标准格式
 
 ```swift
 // MARK: - 分组名称
@@ -57,7 +57,7 @@
 // MARK: 分组名称
 ```
 
-### 常用分组
+### MARK 常用分组
 
 - `// MARK: - 属性`
 - `// MARK: - 初始化`
@@ -68,7 +68,7 @@
 - `// MARK: - 工具方法`
 - `// MARK: - 协议实现`
 
-### 示例
+### MARK 使用示例
 
 ```swift
 // MARK: - 属性
@@ -90,16 +90,16 @@ func startMonitoring() {
 }
 ```
 
-## 💬 属性注释规范
+## 属性注释规范
 
-### 标准格式
+### 属性注释标准格式
 
 ```swift
 /// 属性描述
 private var propertyName: PropertyType
 ```
 
-### 示例
+### 属性注释示例
 
 ```swift
 /// UI 组件
@@ -112,9 +112,9 @@ private let monitor = MonitorLatency(...)
 private var currentEndpoint: ServiceEndpoint?
 ```
 
-## 🔧 方法注释规范
+## 方法注释规范
 
-### 标准格式
+### 方法注释标准格式
 
 ```swift
 /// 方法功能描述
@@ -124,7 +124,7 @@ private var currentEndpoint: ServiceEndpoint?
 func methodName(param1: Type1, param2: Type2) -> ReturnType
 ```
 
-### 示例
+### 方法注释示例
 
 ```swift
 /// 开始监控指定端点
@@ -140,15 +140,15 @@ func updateInterval(_ newInterval: TimeInterval) {
 }
 ```
 
-## 📱 行内注释规范
+## 行内注释规范
 
-### 标准格式
+### 行内注释标准格式
 
 ```swift
 // 注释内容
 ```
 
-### 示例
+### 行内注释示例
 
 ```swift
 // 隐藏 Dock 图标，仅保留菜单栏图标
@@ -161,9 +161,9 @@ menuBarManager = MenuBarController()
 menuBarManager?.cleanup()
 ```
 
-## 🐛 调试注释规范
+## 调试注释规范
 
-### 标准格式
+### 调试注释标准格式
 
 ```swift
 #if DEBUG
@@ -171,7 +171,7 @@ print("[Context] Debug message")
 #endif
 ```
 
-### 示例
+### 调试注释示例
 
 ```swift
 #if DEBUG
@@ -179,9 +179,9 @@ print("[MonitorLatency] Connection waiting for \(endpoint.name): \(error.localiz
 #endif
 ```
 
-## 📚 协议注释规范
+## 协议注释规范
 
-### 标准格式
+### 协议注释标准格式
 
 ```swift
 /// 协议功能描述
@@ -190,22 +190,26 @@ protocol ProtocolName: AnyObject {
 }
 ```
 
-### 示例
+### 协议注释示例
 
 ```swift
 /// 监控结果回调协议
 protocol MonitorLatencyDelegate: AnyObject {
     /// 延迟更新回调
-    func monitor(_ monitor: MonitorLatency, didUpdateLatency latency: TimeInterval, for endpoint: ServiceEndpoint)
+    func monitor(_ monitor: MonitorLatency, 
+                didUpdateLatency latency: TimeInterval, 
+                for endpoint: ServiceEndpoint)
     
     /// 监控失败回调
-    func monitor(_ monitor: MonitorLatency, didFailWithError error: MonitorError, for endpoint: ServiceEndpoint)
+    func monitor(_ monitor: MonitorLatency, 
+                didFailWithError error: MonitorError, 
+                for endpoint: ServiceEndpoint)
 }
 ```
 
-## 🎯 枚举注释规范
+## 枚举注释规范
 
-### 标准格式
+### 枚举注释标准格式
 
 ```swift
 /// 枚举功能描述
@@ -217,7 +221,7 @@ enum EnumName: String, CaseIterable {
 }
 ```
 
-### 示例
+### 枚举注释示例
 
 ```swift
 /// 显示模式枚举
@@ -229,7 +233,7 @@ enum DisplayMode: String, CaseIterable {
 }
 ```
 
-## 🔍 检查清单
+## 检查清单
 
 在提交代码前，请确保：
 
@@ -240,7 +244,7 @@ enum DisplayMode: String, CaseIterable {
 - [ ] 调试代码使用 `#if DEBUG` 包装
 - [ ] 注释内容准确且有用
 
-## 📖 参考资源
+## 参考资源
 
 - [Swift API Design Guidelines](https://swift.org/documentation/api-design-guidelines/)
 - [Apple Documentation](https://developer.apple.com/documentation/)
@@ -248,4 +252,4 @@ enum DisplayMode: String, CaseIterable {
 
 ---
 
-*最后更新：2025年1月*
+最后更新：2025年8月
