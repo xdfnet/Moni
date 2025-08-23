@@ -18,9 +18,7 @@ import Foundation
 // 应用常量
 struct AppConstants {
     // MARK: - 显示常量
-    static let defaultValue = "---"
-    static let errorMessage = "Error"
-    static let timeoutMessage = "Timeout"
+    static let defaultValue = "--"
     
     // MARK: - 版本信息（从 Info.plist 读取）
     struct Version {

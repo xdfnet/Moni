@@ -2,37 +2,50 @@
 
 [![Swift](https://img.shields.io/badge/Swift-5.0+-orange.svg)](https://swift.org)
 [![macOS](https://img.shields.io/badge/macOS-15.0+-blue.svg)](https://developer.apple.com/macos/)
-[![Version](https://img.shields.io/badge/Version-1.06-green.svg)](https://github.com/your-repo/moni)
+[![Version](https://img.shields.io/badge/Version-1.07-green.svg)](https://github.com/your-repo/moni)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ## 项目简介
 
-Moni 是一个轻量级的 macOS 菜单栏应用，专门用于实时监控 AI 服务（如 Claude、Gemini、DeepSeek、Kimi）的网络延迟和系统网络流量。通过直观的状态指示器和简化的连接状态管理，为用户提供可靠的网络监控体验。
+Moni 是一个轻量级的 macOS 菜单栏应用，专门用于实时监控 AI 服务的网络延迟和系统网络流量。通过优化的代码结构、统一的工具函数库和现代化的架构设计，为开发者提供可靠的网络监控体验。
 
 ## 主要特性
 
 ### 核心功能
 
-- AI 服务延迟监控：实时测量 LLM 服务的网络延迟
-- 网络流量统计：监控系统网络下载速度
-- 菜单栏集成：轻量级设计，不占用桌面空间
-- 可配置监控间隔：支持 0.5s、1s、2s、5s 多种频率
+- **AI 服务延迟监控**：实时测量各种 AI 服务的网络延迟（毫秒精度）
+- **网络流量监控**：监控系统网络下载速度（MB/s，三位小数精度）
+- **菜单栏集成**：轻量级设计，不占用桌面空间
+- **可配置监控间隔**：支持 0.5s、1s、2s、5s 多种频率
 
-### 新增功能 (v1.06)
+### 最新功能 (v1.07)
 
-- 简化状态管理：连接成功/失败两种状态，无复杂重试逻辑
-- 状态指示器：实时显示连接状态和健康度
-- 配置管理系统：支持配置导入/导出和热重载
-- 线程安全：完善的状态管理和资源管理
-- 数据验证：网络数据有效性检查，异常数据自动重置
-- 工具函数库：丰富的开发工具和调试支持
+- **代码结构优化**：删除了重复和未使用的函数，提高代码质量
+- **统一工具函数库**：所有格式化、时间处理、调试都使用 `Utilities` 工具库
+- **线程安全优化**：统一使用 `Utilities.safeMainQueueCallback` 确保主线程回调安全
+- **环境变量继承**：修复了终端环境变量配置，支持 zsh 和 bash
+- **Python 路径优化**：自动识别并使用 Homebrew 安装的 Python 3.13.7
+- **终端配置统一**：Cursor 和 VSCode 都配置为使用 zsh 终端
+- **代码质量提升**：遵循 Swift 最佳实践，注释完整，结构清晰
 
-### 开发工具
+### 服务支持
 
-- 模块化构建系统：Makefile 支持单独运行任何构建步骤
-- 代码质量检查：自动化的代码规范检查脚本
-- 统一注释规范：专业的代码文档标准
-- 错误处理机制：完善的异常处理和恢复逻辑
+#### AI 服务
+- **Claude** (api.anthropic.com)
+- **Gemini** (generativelanguage.googleapis.com)
+- **DeepSeek** (api.deepseek.com)
+- **GLM** (open.bigmodel.cn)
+- **Kimi** (api.moonshot.cn)
+
+#### 开发工具
+- **Homebrew** (formulae.brew.sh)
+- **NPM** (registry.npmjs.org)
+- **PyPI** (pypi.org)
+- **Maven** (repo1.maven.org)
+
+#### 网络服务
+- **Docker Hub** (registry-1.docker.io)
+- **Cursor** (api.cursor.sh)
 
 ## 快速开始
 
@@ -41,6 +54,8 @@ Moni 是一个轻量级的 macOS 菜单栏应用，专门用于实时监控 AI �
 - 操作系统：macOS 15.0 或更高版本
 - 开发工具：Xcode 15.0 或更高版本
 - 编程语言：Swift 5.0
+- 目标平台：macOS 15.0+
+- 推荐终端：zsh（系统默认）
 
 ### 安装和运行
 
@@ -75,27 +90,30 @@ open Moni.xcodeproj
 
 1. 应用启动后会在菜单栏显示图标
 2. 点击图标查看监控菜单
-3. 选择 "View" → "LLM" 监控 AI 服务延迟
-4. 选择 "View" → "Net" 监控网络流量
-5. 通过 "Rate" 菜单调整监控频率
+3. 选择 "View" → "Service" 监控 AI 服务延迟
+4. 选择 "View" → "Network" 监控网络流量
+5. 通过 "Rate" 菜单调整监控频率（0.5s、1s、2s、5s）
+6. 从分类菜单中选择不同的服务进行监控
+7. 状态指示器显示连接状态（✓ 连接成功 / ⚠️ 连接失败）
 
 ## 项目结构
 
 ```text
 Moni/
 ├── Moni/                    # 主要源代码
-│   ├── App.swift           # 应用入口点
-│   ├── MenuBarController.swift  # 菜单栏控制器
-│   ├── BaseMonitor.swift   # 基础监控类
-│   ├── MonitorLatency.swift    # 延迟监控实现
-│   ├── MonitorNetwork.swift    # 网络监控实现
-│   ├── ServiceManager.swift    # 服务端点管理
-│   ├── ConfigurationManager.swift # 配置管理
-│   ├── SharedTypes.swift   # 共享类型定义
-│   └── Utilities.swift     # 工具函数库
+│   ├── App.swift           # 应用入口点和生命周期管理
+│   ├── MenuBarController.swift  # 菜单栏控制器和用户界面
+│   ├── BaseMonitor.swift   # 基础监控抽象类
+│   ├── MonitorLatency.swift    # TCP 延迟监控实现
+│   ├── MonitorNetwork.swift    # 系统网络流量监控
+│   ├── ServiceManager.swift    # 服务端点管理和分类
+│   ├── ConfigurationManager.swift # 用户配置管理
+│   ├── SharedTypes.swift   # 共享类型定义和常量
+│   └── Utilities.swift     # 统一工具函数库
 ├── Scripts/                 # 构建和检查脚本
 │   └── code_quality_check.sh # 代码质量检查
 ├── Docs/                    # 项目文档
+├── Assets.xcassets/         # 应用资源
 └── Makefile                 # 构建自动化脚本
 ```
 
@@ -103,27 +121,51 @@ Moni/
 
 ### 设计模式
 
-- 分层架构：清晰的功能分层和职责分离
-- 代理模式：监控结果的回调通知
-- 观察者模式：状态变化的实时更新
-- 工厂模式：服务端点的统一管理
+- **分层架构**：清晰的功能分层和职责分离
+- **代理模式**：监控结果的回调通知（MonitorLatencyDelegate, MonitorNetworkDelegate）
+- **观察者模式**：状态变化的实时更新
+- **模板方法模式**：BaseMonitor 定义监控流程，子类实现具体逻辑
+- **单例模式**：ServiceManager、ConfigurationManager 的全局访问
+- **策略模式**：不同监控策略（延迟监控 vs 网络监控）
 
 ### 核心技术
 
-- Swift 5.0：现代化的 Swift 语言特性
-- SwiftUI：声明式用户界面框架
-- Network.framework：高性能网络监控
-- sysctl：系统级网络统计信息
-- GCD：异步任务和线程管理
+- **Swift 5.0**：现代化的 Swift 语言特性
+- **Cocoa**：传统的 macOS 应用框架
+- **Network.framework**：高性能 TCP 连接建立和延迟测量
+- **sysctl**：系统级网络统计信息获取
+- **GCD**：异步任务和线程管理
+- **NSLock**：线程安全的状态管理
+- **UserDefaults**：用户配置持久化
+
+### 架构优势
+
+- **模块化设计**：每个组件职责单一，易于维护和扩展
+- **线程安全**：使用 NSLock 和专用队列确保多线程环境稳定性
+- **资源管理**：完善的资源清理机制，防止内存泄漏
+- **用户体验**：简化状态管理，提供直观的界面反馈
+- **代码质量**：统一的工具函数，减少重复代码，提高可维护性
 
 ## 开发指南
 
 ### 代码规范
 
 - 遵循 Swift API Design Guidelines
-- 使用统一的注释风格
+- 使用统一的注释风格和 MARK 分组
 - 支持中文注释，便于理解
 - 完整的错误处理和日志记录
+- 使用 `Utilities` 工具库统一常用功能
+
+### 工具函数库
+
+`Utilities.swift` 提供了丰富的工具函数：
+
+- **格式化工具**：`formatLatency`, `formatSpeed`, `formatInterval`
+- **时间工具**：`currentTimestamp`, `timeDifference`
+- **线程安全工具**：`safeMainQueueCallback`
+- **数值工具**：`safeInt`, `clamp`, `validateServiceEndpoint`
+- **性能工具**：`measureExecutionTime`
+- **调试工具**：`debugPrint`, `printPerformanceStats`
 
 ### 构建系统
 
@@ -143,6 +185,7 @@ make test              # 运行测试
 
 ## 版本历史
 
+- v1.07 (2025-01-13): 代码结构优化、工具函数统一、终端配置优化
 - v1.06 (2025-01-13): 简化状态管理、状态指示器、配置管理
 - v1.05 (2025-01-13): 代码质量检查、注释规范
 - v1.04 (2025-01-13): 基础监控类、网络监控、服务管理

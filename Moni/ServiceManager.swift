@@ -43,24 +43,26 @@ class ServiceManager {
     }
     
     private func loadEndpoints() {
-        // 按类别组织服务配置
+        // AI 服务
         let aiServices = [
             ServiceEndpoint(name: "Claude", host: "api.anthropic.com", port: 443),
             ServiceEndpoint(name: "Gemini", host: "generativelanguage.googleapis.com", port: 443),
-            ServiceEndpoint(name: "DeepSeek", host: "api.deepseek.com", port: 443),
             ServiceEndpoint(name: "GLM", host: "open.bigmodel.cn", port: 443),
             ServiceEndpoint(name: "Kimi", host: "api.moonshot.cn", port: 443),
+            ServiceEndpoint(name: "DeepSeek", host: "api.deepseek.com", port: 443),
         ]
         
+        // Development — Homebrew 与 NPM 相关
         let developmentServices = [
-            ServiceEndpoint(name: "Homebrew", host: "github.com", port: 443),
+            ServiceEndpoint(name: "Homebrew", host: "formulae.brew.sh", port: 443),
             ServiceEndpoint(name: "NPM", host: "registry.npmjs.org", port: 443),
             ServiceEndpoint(name: "PyPI", host: "pypi.org", port: 443),
             ServiceEndpoint(name: "Maven", host: "repo1.maven.org", port: 443),
         ]
         
+        // Network / Container 服务
         let networkServices = [
-            ServiceEndpoint(name: "Docker", host: "registry-1.docker.io", port: 443),
+            ServiceEndpoint(name: "Docker Hub", host: "registry-1.docker.io", port: 443),
             ServiceEndpoint(name: "Cursor", host: "api.cursor.sh", port: 443),
         ]
         
@@ -71,49 +73,23 @@ class ServiceManager {
             CategorizedServiceEndpoint(category: .network, endpoints: networkServices)
         ]
         
-        // 构建扁平列表（向后兼容）
+        // 扁平列表
         allEndpoints = aiServices + developmentServices + networkServices
     }
     
     // MARK: - 分类访问方法
-    
-    /// 获取指定类别的服务
     func getEndpoints(for category: ServiceCategory) -> [ServiceEndpoint] {
         return categorizedEndpoints.first { $0.category == category }?.endpoints ?? []
     }
     
-    /// 获取所有类别
     var categories: [ServiceCategory] {
         return ServiceCategory.allCases
     }
     
-    // MARK: - 向后兼容方法
-    
-    /// 获取所有端点（扁平列表）
+    // MARK: - 向后兼容
     var endpoints: [ServiceEndpoint] {
         return allEndpoints
     }
     
-    func getEndpoint(by name: String) -> ServiceEndpoint? {
-        return allEndpoints.first { $0.name == name }
-    }
-    
-    func reloadConfig() {
-        loadEndpoints()
-    }
-    
-    // MARK: - 验证方法
-    
-    /// 验证端点配置的有效性
-    func validateEndpoint(_ endpoint: ServiceEndpoint) -> Bool {
-        return !endpoint.name.isEmpty && 
-               !endpoint.host.isEmpty && 
-               endpoint.port > 0 && 
-               endpoint.port <= 65535
-    }
-    
-    /// 获取所有有效的端点
-    var validEndpoints: [ServiceEndpoint] {
-        return allEndpoints.filter { validateEndpoint($0) }
-    }
+
 }

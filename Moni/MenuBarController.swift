@@ -121,18 +121,18 @@ class MenuBarController: NSObject, MonitorLatencyDelegate, MonitorNetworkDelegat
         if currentDisplayMode == .serviceLatency {
             // 优先使用已保存的服务，如果没有则默认选择 Claude
             if let endpoint = currentEndpoint {
-                print("使用已保存的服务: \(endpoint.name)")
+                Utilities.debugPrint("使用已保存的服务: \(endpoint.name)")
                 switchToEndpoint(endpoint)
             } else if let claudeEndpoint = ServiceManager.shared.endpoints.first(where: { $0.name == "Claude" }) {
-                print("使用默认服务: Claude")
+                Utilities.debugPrint("使用默认服务: Claude")
                 currentEndpoint = claudeEndpoint
                 switchToEndpoint(claudeEndpoint)
             } else if let firstEndpoint = ServiceManager.shared.endpoints.first {
-                print("使用第一个可用服务: \(firstEndpoint.name)")
+                Utilities.debugPrint("使用第一个可用服务: \(firstEndpoint.name)")
                 currentEndpoint = firstEndpoint
                 switchToEndpoint(firstEndpoint)
             } else {
-                print("警告: 没有可用的服务端点")
+                Utilities.debugPrint("警告: 没有可用的服务端点")
             }
         } else {
             networkStats.startMonitoring(interval: currentMonitoringInterval)
@@ -389,7 +389,7 @@ class MenuBarController: NSObject, MonitorLatencyDelegate, MonitorNetworkDelegat
         let displayText = createDisplayText()
         let statusIcon = createStatusIcon()
         
-        DispatchQueue.main.async { [weak self] in
+        Utilities.safeMainQueueCallback { [weak self] in
             guard let self = self else { return }
             
             if let button = self.statusBarItem?.button {
@@ -456,17 +456,13 @@ class MenuBarController: NSObject, MonitorLatencyDelegate, MonitorNetworkDelegat
         }
     }
     
-    /// 将速度格式化为 MB/s，保留两位小数
-    private func formatSpeed(_ speed: Double) -> String {
-        return String(format: "%.2fMB/s", speed)
-    }
+
     
     // MARK: - MonitorLatencyDelegate
     
     /// 延迟更新回调（毫秒，0 位小数）
     func monitor(_ monitor: MonitorLatency, didUpdateLatency latency: TimeInterval, for endpoint: ServiceEndpoint) {
-        let latencyMs = latency * 1000
-        currentLatency = String(format: "%.0fms", latencyMs)
+        currentLatency = Utilities.formatLatency(latency)
         connectionStatus = .connected
         isHealthy = true
         updateCombinedDisplay()
@@ -482,9 +478,9 @@ class MenuBarController: NSObject, MonitorLatencyDelegate, MonitorNetworkDelegat
     
     // MARK: - MonitorNetworkDelegate
     
-    /// 下行网速更新（单位 MB/s，2 位小数）
+    /// 下行网速更新（单位 MB/s，3 位小数）
     func networkStats(_ stats: MonitorNetwork, didUpdateDownloadSpeed speed: Double) {
-        currentDownloadSpeed = formatSpeed(speed)
+        currentDownloadSpeed = Utilities.formatSpeed(speed)
         connectionStatus = .connected
         isHealthy = true
         updateCombinedDisplay()

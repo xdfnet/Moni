@@ -236,7 +236,7 @@ class ConfigurationManager {
     
     /// 通知配置变更
     private func notifyConfigurationChanged() {
-        DispatchQueue.main.async {
+        Utilities.safeMainQueueCallback {
             self.onConfigurationChanged?()
         }
     }

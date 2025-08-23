@@ -78,7 +78,7 @@ class MonitorLatency: BaseMonitor {
     
     /// 执行一次 TCP 探测并计算时延
     private func pingEndpoint(_ endpoint: ServiceEndpoint) {
-        let startTime = CFAbsoluteTimeGetCurrent()
+        let startTime = Utilities.currentTimestamp()
         
         // 创建连接
         let connection = NWConnection(
@@ -107,7 +107,7 @@ class MonitorLatency: BaseMonitor {
         switch state {
         case .ready:
             timeoutWorkItem.cancel()
-            let latency = CFAbsoluteTimeGetCurrent() - startTime
+            let latency = Utilities.timeDifference(from: startTime)
             handleSuccessfulConnection(latency: latency, for: endpoint)
             
         case .failed(_):
@@ -119,7 +119,7 @@ class MonitorLatency: BaseMonitor {
             // 连接被取消，不需要特殊处理
             
         case .waiting, .preparing, .setup:
-            // 连接准备中，正常状态
+            // 连接准备中，正常状态，无需处理
             break
             
         @unknown default:
@@ -132,9 +132,9 @@ class MonitorLatency: BaseMonitor {
     private func handleSuccessfulConnection(latency: TimeInterval, for endpoint: ServiceEndpoint) {
         cleanupCurrentConnection()
         
-        DispatchQueue.main.async { [weak self] in
+        Utilities.safeMainQueueCallback { [weak self] in
             guard let self = self else { return }
-            self.delegate?.monitor(self, didUpdateLatency: latency, for: endpoint)
+            self.delegate?.monitor(self, didUpdateLatency: latency, for endpoint)
         }
     }
     
@@ -145,12 +145,12 @@ class MonitorLatency: BaseMonitor {
     }
     
     /// 处理连接失败
-        private func handleConnectionFailure(for endpoint: ServiceEndpoint) {
+    private func handleConnectionFailure(for endpoint: ServiceEndpoint) {
         cleanupCurrentConnection()
 
-        DispatchQueue.main.async { [weak self] in
+        Utilities.safeMainQueueCallback { [weak self] in
             guard let self = self else { return }
-            self.delegate?.monitor(self, didFailWithError: ConnectionStatus.disconnected, for: endpoint)
+            self.delegate?.monitor(self, didFailWithError: ConnectionStatus.disconnected, for endpoint)
         }
 
         logConnectionFailure(for: endpoint)
@@ -165,14 +165,14 @@ class MonitorLatency: BaseMonitor {
     /// 记录未知连接状态
     private func logUnknownConnectionState(_ state: NWConnection.State, for endpoint: ServiceEndpoint) {
         #if DEBUG
-        print("[MonitorLatency] Unknown connection state for \(endpoint.name): \(state)")
+        Utilities.debugPrint("Unknown connection state for \(endpoint.name): \(state)")
         #endif
     }
     
     /// 记录连接失败
     private func logConnectionFailure(for endpoint: ServiceEndpoint) {
         #if DEBUG
-        print("[MonitorLatency] Connection failed for \(endpoint.name)")
+        Utilities.debugPrint("Connection failed for \(endpoint.name)")
         #endif
     }
 }

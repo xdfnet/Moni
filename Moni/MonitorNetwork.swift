@@ -80,7 +80,7 @@ class MonitorNetwork: BaseMonitor {
     /// 计算下载速率并回调（MB/s）
     private func updateNetworkSpeeds() {
         let currentTime = Utilities.currentTimestamp()
-        let timeElapsed = currentTime - lastUpdateTime
+        let timeElapsed = Utilities.timeDifference(from: lastUpdateTime)
         
         guard timeElapsed > 0 else { return }
         
@@ -97,8 +97,9 @@ class MonitorNetwork: BaseMonitor {
             
             let receivedDiff = currentReceived - lastBytesReceived
             
-            // 转换为 MB/s
-            let downloadSpeedMBps = Double(receivedDiff) / timeElapsed / (1024.0 * 1024.0)
+            // 转换为 MB/s (1024 * 1024 = 1,048,576 bytes per MB)
+            let bytesPerMB: Double = 1024.0 * 1024.0
+            let downloadSpeedMBps = Double(receivedDiff) / timeElapsed / bytesPerMB
             
             // 验证速度值的合理性
             guard downloadSpeedMBps >= 0 && downloadSpeedMBps <= MonitorConstants.maxReasonableSpeed else {
@@ -139,21 +140,21 @@ class MonitorNetwork: BaseMonitor {
     /// 记录网络接口重置
     private func logNetworkInterfaceReset() {
         #if DEBUG
-        print("[MonitorNetwork] Network interface reset detected, reinitializing stats")
+        Utilities.debugPrint("Network interface reset detected, reinitializing stats")
         #endif
     }
     
     /// 记录不合理的速度值
     private func logUnreasonableSpeed(_ speed: Double) {
         #if DEBUG
-        print("[MonitorNetwork] Unreasonable speed detected: \(String(format: "%.2f", speed))MB/s")
+        Utilities.debugPrint("Unreasonable speed detected: \(Utilities.formatSpeed(speed))")
         #endif
     }
     
     /// 记录网络错误
     private func logNetworkError(_ error: Error) {
         #if DEBUG
-        print("[MonitorNetwork] Network error: \(error.localizedDescription)")
+        Utilities.debugPrint("Network error: \(error.localizedDescription)")
         #endif
     }
     
@@ -162,34 +163,33 @@ class MonitorNetwork: BaseMonitor {
         var totalReceivedBytes: UInt64 = 0
         var totalSentBytes: UInt64 = 0
         
+        // 系统调用参数
         let mib: [Int32] = [CTL_NET, PF_ROUTE, 0, 0, NET_RT_IFLIST2, 0]
+        let ifmSize = MemoryLayout<if_msghdr>.size
+        let if2mSize = MemoryLayout<if_msghdr2>.size
+        
+        // 第一次调用：获取所需缓冲区大小
         var len: size_t = 0
-
-        mib.withUnsafeBufferPointer { ptr in
-            if sysctl(UnsafeMutablePointer(mutating: ptr.baseAddress), UInt32(mib.count), nil, &len, nil, 0) < 0 {
-                return
-            }
+        guard sysctl(UnsafeMutablePointer(mutating: mib), UInt32(mib.count), nil, &len, nil, 0) >= 0 else {
+            throw NetworkError.sysctlFailed
         }
-
+        
         // 分配缓冲区并获取数据
         var buffer = [CChar](repeating: 0, count: len)
-        mib.withUnsafeBufferPointer { ptr in
-            if sysctl(UnsafeMutablePointer(mutating: ptr.baseAddress), UInt32(mib.count), &buffer, &len, nil, 0) < 0 {
-                return
-            }
+        guard sysctl(UnsafeMutablePointer(mutating: mib), UInt32(mib.count), &buffer, &len, nil, 0) >= 0 else {
+            throw NetworkError.sysctlFailed
         }
-
+        
+        // 解析网络接口信息
         var offset = 0
-
-        while offset + MemoryLayout<if_msghdr>.size <= len {
-            let ifm = buffer.withUnsafeBytes { (ptr: UnsafeRawBufferPointer) -> if_msghdr in
+        while offset + ifmSize <= len {
+            let ifm = buffer.withUnsafeBytes { ptr in
                 ptr.load(fromByteOffset: offset, as: if_msghdr.self)
             }
-
+            
             // 确保有足够空间读取 if_msghdr2
-            let if2mSize = MemoryLayout<if_msghdr2>.size
             if offset + if2mSize <= len && ifm.ifm_type == RTM_IFINFO2 {
-                let if2m = buffer.withUnsafeBytes { (ptr: UnsafeRawBufferPointer) -> if_msghdr2 in
+                let if2m = buffer.withUnsafeBytes { ptr in
                     ptr.load(fromByteOffset: offset, as: if_msghdr2.self)
                 }
                 
@@ -206,7 +206,14 @@ class MonitorNetwork: BaseMonitor {
             }
             offset += Int(ifm.ifm_msglen)
         }
+        
         return (totalReceivedBytes, totalSentBytes)
+    }
+    
+    // MARK: - 私有错误类型
+    
+    private enum NetworkError: Error {
+        case sysctlFailed
     }
 }
 
