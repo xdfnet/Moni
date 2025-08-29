@@ -18,6 +18,7 @@ import Foundation
 // MARK: - 服务类别
 enum ServiceCategory: String, CaseIterable {
     case aiServices = "AI Services"
+    case ideServices = "IDE Services"  // 新增IDE Services分类
     case development = "Development"
     case network = "Network"
     
@@ -47,11 +48,19 @@ class ServiceManager {
         let aiServices = [
             ServiceEndpoint(name: "Claude", host: "api.anthropic.com", port: 443),
             ServiceEndpoint(name: "Gemini", host: "generativelanguage.googleapis.com", port: 443),
-            ServiceEndpoint(name: "GLM", host: "open.bigmodel.cn", port: 443),
-            ServiceEndpoint(name: "Kimi", host: "api.moonshot.cn", port: 443),
             ServiceEndpoint(name: "DeepSeek", host: "api.deepseek.com", port: 443),
+            ServiceEndpoint(name: "GLM", host: "open.bigmodel.cn", port: 443),
+            ServiceEndpoint(name: "Qwen", host: "dashscope.aliyuncs.com", port: 443),
+            ServiceEndpoint(name: "Kimi", host: "api.moonshot.cn", port: 443),
         ]
-        
+
+        // IDE Services
+        let ideServices = [
+            ServiceEndpoint(name: "Cursor", host: "api.cursor.sh", port: 443),
+            ServiceEndpoint(name: "Visual Studio Code", host: "marketplace.visualstudio.com", port: 443),
+            ServiceEndpoint(name: "Windsurf", host: "api.windsurf.sh", port: 443),
+        ]
+
         // Development — Homebrew 与 NPM 相关
         let developmentServices = [
             ServiceEndpoint(name: "Homebrew", host: "formulae.brew.sh", port: 443),
@@ -63,18 +72,18 @@ class ServiceManager {
         // Network / Container 服务
         let networkServices = [
             ServiceEndpoint(name: "Docker Hub", host: "registry-1.docker.io", port: 443),
-            ServiceEndpoint(name: "Cursor", host: "api.cursor.sh", port: 443),
         ]
-        
+
         // 构建分类结构
         categorizedEndpoints = [
             CategorizedServiceEndpoint(category: .aiServices, endpoints: aiServices),
+            CategorizedServiceEndpoint(category: .ideServices, endpoints: ideServices),
             CategorizedServiceEndpoint(category: .development, endpoints: developmentServices),
             CategorizedServiceEndpoint(category: .network, endpoints: networkServices)
         ]
         
         // 扁平列表
-        allEndpoints = aiServices + developmentServices + networkServices
+        allEndpoints = aiServices + ideServices + developmentServices + networkServices
     }
     
     // MARK: - 分类访问方法

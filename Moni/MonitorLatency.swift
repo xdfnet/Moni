@@ -134,7 +134,7 @@ class MonitorLatency: BaseMonitor {
         
         Utilities.safeMainQueueCallback { [weak self] in
             guard let self = self else { return }
-            self.delegate?.monitor(self, didUpdateLatency: latency, for endpoint)
+            self.delegate?.monitor(self, didUpdateLatency: latency, for: endpoint)
         }
     }
     
@@ -150,7 +150,7 @@ class MonitorLatency: BaseMonitor {
 
         Utilities.safeMainQueueCallback { [weak self] in
             guard let self = self else { return }
-            self.delegate?.monitor(self, didFailWithError: ConnectionStatus.disconnected, for endpoint)
+            self.delegate?.monitor(self, didFailWithError: ConnectionStatus.disconnected, for: endpoint)
         }
 
         logConnectionFailure(for: endpoint)
