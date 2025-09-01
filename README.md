@@ -2,7 +2,7 @@
 
 [![Swift](https://img.shields.io/badge/Swift-5.0+-orange.svg)](https://swift.org)
 [![macOS](https://img.shields.io/badge/macOS-15.0+-blue.svg)](https://developer.apple.com/macos/)
-[![Version](https://img.shields.io/badge/Version-1.07-green.svg)](https://github.com/your-repo/moni)
+[![Version](https://img.shields.io/badge/Version-1.11-green.svg)](https://github.com/xdfnet/Moni)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ## 项目简介
@@ -18,7 +18,7 @@ Moni 是一个轻量级的 macOS 菜单栏应用，专门用于实时监控 AI �
 - **菜单栏集成**：轻量级设计，不占用桌面空间
 - **可配置监控间隔**：支持 0.5s、1s、2s、5s 多种频率
 
-### 最新功能 (v1.07)
+### 最新功能 (v1.11)
 
 - **代码结构优化**：删除了重复和未使用的函数，提高代码质量
 - **统一工具函数库**：所有格式化、时间处理、调试都使用 `Utilities` 工具库
@@ -35,7 +35,13 @@ Moni 是一个轻量级的 macOS 菜单栏应用，专门用于实时监控 AI �
 - **Gemini** (generativelanguage.googleapis.com)
 - **DeepSeek** (api.deepseek.com)
 - **GLM** (open.bigmodel.cn)
+- **Qwen** (dashscope.aliyuncs.com)
 - **Kimi** (api.moonshot.cn)
+
+#### IDE 服务
+- **Cursor** (api.cursor.sh)
+- **Visual Studio Code** (marketplace.visualstudio.com)
+- **Windsurf** (api.windsurf.sh)
 
 #### 开发工具
 - **Homebrew** (formulae.brew.sh)
@@ -45,7 +51,6 @@ Moni 是一个轻量级的 macOS 菜单栏应用，专门用于实时监控 AI �
 
 #### 网络服务
 - **Docker Hub** (registry-1.docker.io)
-- **Cursor** (api.cursor.sh)
 
 ## 快速开始
 
@@ -63,7 +68,7 @@ Moni 是一个轻量级的 macOS 菜单栏应用，专门用于实时监控 AI �
 
 ```bash
 # 克隆项目
-git clone <repository-url>
+git clone https://github.com/xdfnet/Moni.git
 cd Moni
 
 # 完整构建（包含版本号递增）
@@ -185,6 +190,10 @@ make test              # 运行测试
 
 ## 版本历史
 
+- v1.11 (2025-09-01): 服务分类优化，添加 IDE Services 支持
+- v1.10 (2025-08-31): 性能优化和 bug 修复
+- v1.09 (2025-08-30): 网络监控稳定性改进
+- v1.08 (2025-08-29): 用户界面优化和体验改进
 - v1.07 (2025-01-13): 代码结构优化、工具函数统一、终端配置优化
 - v1.06 (2025-01-13): 简化状态管理、状态指示器、配置管理
 - v1.05 (2025-01-13): 代码质量检查、注释规范
@@ -209,7 +218,7 @@ make test              # 运行测试
 
 ## 联系方式
 
-- 项目主页：[repository-url]
+- 项目主页：https://github.com/xdfnet/Moni
 - 问题反馈：提交 GitHub Issue
 - 功能建议：参与项目讨论
 
@@ -224,3 +233,5 @@ Moni - 让 AI 服务监控变得简单高效
 ---
 
 Built with ❤️ using Swift and SwiftUI
+
+© 2025 Moni App
