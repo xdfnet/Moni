@@ -92,6 +92,6 @@ struct MonitorConstants {
     static let networkQueueLabel = "com.moni.network"
     
     // 网络监控配置
-    static let maxReasonableSpeed: Double = 1000.0  // 1000 MB/s 作为合理速度上限
+    static let maxReasonableSpeed: Double = 1000.0  // 1000 MB/s（十进制）作为合理速度上限
 }
 

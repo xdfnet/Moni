@@ -479,8 +479,8 @@ class MenuBarController: NSObject, MonitorLatencyDelegate, MonitorNetworkDelegat
     // MARK: - MonitorNetworkDelegate
     
     /// 下行网速更新（单位 MB/s，3 位小数）
-    func networkStats(_ stats: MonitorNetwork, didUpdateDownloadSpeed speed: Double) {
-        currentDownloadSpeed = Utilities.formatSpeed(speed)
+    func networkStats(_ stats: MonitorNetwork, didUpdateDownloadSpeed downloadSpeed: Double, uploadSpeed: Double) {
+        currentDownloadSpeed = Utilities.formatSpeed(downloadSpeed)
         connectionStatus = .connected
         isHealthy = true
         updateCombinedDisplay()

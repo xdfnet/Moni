@@ -21,7 +21,7 @@ import Darwin
 
 /// 网络速率回调协议（单位：MB/s）
 protocol MonitorNetworkDelegate: AnyObject {
-    func networkStats(_ stats: MonitorNetwork, didUpdateDownloadSpeed speed: Double) // MB/s
+    func networkStats(_ stats: MonitorNetwork, didUpdateDownloadSpeed downloadSpeed: Double, uploadSpeed: Double) // MB/s
     func networkStats(_ stats: MonitorNetwork, didFailWithError status: ConnectionStatus)
 }
 
@@ -97,8 +97,8 @@ class MonitorNetwork: BaseMonitor {
             
             let receivedDiff = currentReceived - lastBytesReceived
             
-            // 转换为 MB/s (1024 * 1024 = 1,048,576 bytes per MB)
-            let bytesPerMB: Double = 1024.0 * 1024.0
+            // 转换为 MB/s (1000 * 1000 = 1,000,000 bytes per MB - 十进制标准)
+            let bytesPerMB: Double = 1000.0 * 1000.0
             let downloadSpeedMBps = Double(receivedDiff) / timeElapsed / bytesPerMB
             
             // 验证速度值的合理性
@@ -110,7 +110,7 @@ class MonitorNetwork: BaseMonitor {
             
             Utilities.safeMainQueueCallback { [weak self] in
                 guard let self = self else { return }
-                self.delegate?.networkStats(self, didUpdateDownloadSpeed: downloadSpeedMBps)
+                self.delegate?.networkStats(self, didUpdateDownloadSpeed: downloadSpeedMBps, uploadSpeed: 0.0)
             }
             
             lastBytesReceived = currentReceived
@@ -158,10 +158,9 @@ class MonitorNetwork: BaseMonitor {
         #endif
     }
     
-    /// 汇总所有有效网卡的累计收发字节数
+    /// 汇总所有有效网卡的累计接收字节数
     private func getTotalNetworkBytes() throws -> (received: UInt64, sent: UInt64) {
         var totalReceivedBytes: UInt64 = 0
-        var totalSentBytes: UInt64 = 0
         
         // 系统调用参数
         let mib: [Int32] = [CTL_NET, PF_ROUTE, 0, 0, NET_RT_IFLIST2, 0]
@@ -196,7 +195,6 @@ class MonitorNetwork: BaseMonitor {
                 // 只考虑活跃的非回环接口
                 if (if2m.ifm_flags & IFF_UP) != 0 && (if2m.ifm_flags & IFF_LOOPBACK) == 0 {
                     totalReceivedBytes += if2m.ifm_data.ifi_ibytes
-                    totalSentBytes += if2m.ifm_data.ifi_obytes
                 }
             }
             
@@ -207,7 +205,7 @@ class MonitorNetwork: BaseMonitor {
             offset += Int(ifm.ifm_msglen)
         }
         
-        return (totalReceivedBytes, totalSentBytes)
+        return (totalReceivedBytes, 0)  // 返回 0 表示不使用发送字节数
     }
     
     // MARK: - 私有错误类型

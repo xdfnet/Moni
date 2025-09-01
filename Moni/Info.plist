@@ -5,9 +5,9 @@
 	<key>CFBundleIconFile</key>
 	<string></string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.07</string>
+	<string>1.11</string>
 	<key>CFBundleVersion</key>
-	<string>20250829004222</string>
+	<string>20250830132456</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>$(MACOSX_DEPLOYMENT_TARGET)</string>
 	<key>NSSupportsAutomaticTermination</key>

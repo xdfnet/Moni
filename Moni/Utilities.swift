@@ -31,9 +31,9 @@ struct Utilities {
     
     /// 格式化网络速度（MB/s）
     /// - Parameter speed: 网络速度（MB/s）
-    /// - Returns: 格式化的速度字符串，如 "12.345MB/s"
+    /// - Returns: 格式化的速度字符串，如 "12.34MB/s"
     static func formatSpeed(_ speed: Double) -> String {
-        return String(format: "%.3fMB/s", speed)
+        return String(format: "%.2fMB/s", speed)
     }
     
     /// 格式化时间间隔
